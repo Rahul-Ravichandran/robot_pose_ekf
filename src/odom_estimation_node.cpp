@@ -45,7 +45,7 @@ using namespace tf;
 
 static const double EPS = 1e-5;
 
-
+geometry_msgs::PoseStamped odom_msg;
 //#define __EKF_DEBUG_FILE__
 
 namespace estimation
@@ -101,7 +101,7 @@ namespace estimation
     timer_ = nh_private.createTimer(ros::Duration(1.0/max(freq,1.0)), &OdomEstimationNode::spin, this);
 
     // advertise our estimation
-    pose_pub_ = nh_private.advertise<geometry_msgs::PoseWithCovarianceStamped>("odom_combined", 10);
+    pose_pub_ = nh_private.advertise<geometry_msgs::PoseStamped>("odom_combined", 10);
 
     // initialize
     filter_stamp_ = Time::now();
@@ -431,7 +431,10 @@ namespace estimation
           
           // output most recent estimate and relative covariance
           my_filter_.getEstimate(output_);
-          pose_pub_.publish(output_);
+          odom_msg.pose.position = output_.pose.pose.position;
+          odom_msg.pose.orientation = output_.pose.pose.orientation;
+          odom_msg.header = output_.header;
+          pose_pub_.publish(odom_msg);
           ekf_sent_counter_++;
           
           // broadcast most recent estimate to TransformArray
